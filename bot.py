@@ -73,20 +73,30 @@ def get_open_position_qty(symbol: str) -> int:
         return 0
 
 def send_email(subject: str, body: str) -> None:
-    if not (TO_EMAIL and FROM_EMAIL and SMTP_HOST and SMTP_USER and SMTP_PASS):
-        print("Missing email/SMTP env vars; cannot send.", file=sys.stderr)
+    resend_key = os.getenv("RESEND_API_KEY", "")
+    if not (resend_key and TO_EMAIL and FROM_EMAIL):
+        print("Missing RESEND_API_KEY / ALERT_TO_EMAIL / ALERT_FROM_EMAIL; cannot send.", file=sys.stderr)
         return
 
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = FROM_EMAIL
-    msg["To"] = TO_EMAIL
-    msg.set_content(body)
-
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as s:
-        s.starttls()
-        s.login(SMTP_USER, SMTP_PASS)
-        s.send_message(msg)
+    try:
+        r = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {resend_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": FROM_EMAIL,
+                "to": [TO_EMAIL],
+                "subject": subject,
+                "text": body,
+            },
+            timeout=20,
+        )
+        r.raise_for_status()
+        print("Email sent via Resend.")
+    except Exception as e:
+        print(f"Email send failed (Resend): {e}", file=sys.stderr)
 
 def buy_alert(qty: int) -> tuple[str, str]:
     subj = "BUY SPY — ACTION REQUIRED"
