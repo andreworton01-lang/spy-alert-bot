@@ -103,6 +103,10 @@ Open Alpaca and SELL immediately.
 # ---- Decision Logic (simple + safe scaffolding) ----
 def decide_and_notify():
     dt = now_utc()
+        if os.getenv("FORCE_EMAIL_TEST", "0") == "1":
+        send_email("BOT TEST — spy-alert-bot", "If you received this, Railway cron + SMTP is working.")
+        print("Sent FORCE_EMAIL_TEST email.")
+        return
     if not in_window_utc(dt):
         print("Outside window; exiting.")
         return
