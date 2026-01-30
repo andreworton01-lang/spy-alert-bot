@@ -139,11 +139,11 @@ def decide_and_notify():
     # - If no position: send a BUY at a predictable minute (e.g., :40)
     # - If position: send a SELL at a predictable minute (e.g., :55)
     if MODE.upper() == "DRY_RUN":
-        if qty_open == 0 and dt.minute in (40,):
+        if qty_open == 0 and dt.minute % 5 == 0:
             subj, body = buy_alert(qty=1)
             send_email(subj, body)
             print("Sent DRY_RUN BUY.")
-        elif qty_open > 0 and dt.minute in (55,):
+        elif qty_open > 0 and dt.minute % 5 == 0:
             subj, body = sell_alert(qty=qty_open, reason="DRY_RUN exit")
             send_email(subj, body)
             print("Sent DRY_RUN SELL.")
