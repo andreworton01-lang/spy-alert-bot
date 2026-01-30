@@ -27,6 +27,7 @@ WINDOW_END_UTC = os.getenv("WINDOW_END_UTC", "16:00")
 
 # Mode: "DRY_RUN" sends predictable test alerts; "LIVE" uses simple rule stub.
 MODE = os.getenv("MODE", "DRY_RUN")  # DRY_RUN or LIVE
+FORCE_EMAIL_TEST = os.getenv("FORCE_EMAIL_TEST", "0")  # set to "1" to send a test email on next run
 
 # ---- Helpers ----
 def now_utc() -> datetime:
@@ -112,6 +113,13 @@ Open Alpaca and SELL immediately.
 # ---- Decision Logic (simple + safe scaffolding) ----
 def decide_and_notify():
     dt = now_utc()
+
+    # One-time email test switch (set FORCE_EMAIL_TEST=1 in Railway Variables)
+    if FORCE_EMAIL_TEST == "1":
+        send_email("BOT TEST — spy-alert-bot", "If you received this, Railway cron + SMTP is working.")
+        print("Sent FORCE_EMAIL_TEST email.")
+        return
+
     if not in_window_utc(dt):
         print("Outside window; exiting.")
         return
