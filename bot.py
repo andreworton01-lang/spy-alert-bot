@@ -71,7 +71,6 @@ def get_open_position_qty(symbol: str) -> int:
     except Exception as e:
         print(f"ALPACA UNKNOWN ERROR: {e}")
         return 0
-        raise
 
 def send_email(subject: str, body: str) -> None:
     if not (TO_EMAIL and FROM_EMAIL and SMTP_HOST and SMTP_USER and SMTP_PASS):
