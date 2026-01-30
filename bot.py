@@ -55,12 +55,21 @@ def alpaca_get(path: str, params: dict | None = None) -> dict:
 def get_open_position_qty(symbol: str) -> int:
     try:
         pos = alpaca_get(f"/v2/positions/{symbol}")
-        # Alpaca returns qty as string
         return int(float(pos.get("qty", "0")))
     except requests.HTTPError as e:
-        # 404 means no position
-        if e.response is not None and e.response.status_code == 404:
+        status = e.response.status_code if e.response is not None else None
+        # 404 means no position; treat as 0
+        if status == 404:
             return 0
+        # 401/403 means auth; log and treat as "unknown" -> 0 for now
+        if status in (401, 403):
+            print(f"ALPACA AUTH ERROR {status}: check paper keys + endpoint. {e}")
+            return 0
+        print(f"ALPACA HTTP ERROR {status}: {e}")
+        return 0
+    except Exception as e:
+        print(f"ALPACA UNKNOWN ERROR: {e}")
+        return 0
         raise
 
 def send_email(subject: str, body: str) -> None:
@@ -103,10 +112,6 @@ Open Alpaca and SELL immediately.
 # ---- Decision Logic (simple + safe scaffolding) ----
 def decide_and_notify():
     dt = now_utc()
-        if os.getenv("FORCE_EMAIL_TEST", "0") == "1":
-        send_email("BOT TEST — spy-alert-bot", "If you received this, Railway cron + SMTP is working.")
-        print("Sent FORCE_EMAIL_TEST email.")
-        return
     if not in_window_utc(dt):
         print("Outside window; exiting.")
         return
